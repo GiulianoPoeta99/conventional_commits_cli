@@ -24,12 +24,13 @@ type Emoji struct {
 
 // CommitConfig holds the user's selections for a commit
 type CommitConfig struct {
-	Type        CommitType
-	Scope       string
-	Emoji       Emoji
-	Description string
-	Body        string
-	Breaking    bool
+	Type           CommitType
+	Scope          string
+	Emoji          Emoji
+	Description    string
+	Body           string
+	Breaking       bool
+	BreakingReason string
 }
 
 // GetCommitTypes returns all available conventional commit types
@@ -165,169 +166,6 @@ func inputScope() (string, error) {
 	return result, nil
 }
 
-// Function to select an emoji
-func selectEmoji() (Emoji, error) {
-	emojis := GetEmojis()
-	items := []string{}
-
-	for _, e := range emojis {
-		items = append(items, fmt.Sprintf(":%s: -> %s", e.Code, e.Description))
-	}
-
-	prompt := promptui.Select{
-		Label:        "Select an emoji",
-		Items:        items,
-		Size:         10,
-		CursorPos:    0,
-		HideSelected: false,
-		// Add a searcher function to filter emojis
-		Searcher: func(input string, index int) bool {
-			item := strings.ToLower(items[index])
-			input = strings.ToLower(input)
-			return strings.Contains(item, input)
-		},
-	}
-
-	index, _, err := prompt.Run()
-	if err != nil {
-		return Emoji{}, err
-	}
-	return emojis[index], nil
-}
-
-// Function to input the commit description
-func inputDescription() (string, error) {
-	prompt := promptui.Prompt{
-		Label:     "Commit description",
-		Default:   "",
-		AllowEdit: true,
-		Validate: func(input string) error {
-			if len(input) < 3 {
-				return errors.New("Description must have at least 3 characters")
-			}
-			return nil
-		},
-	}
-
-	result, err := prompt.Run()
-	if err != nil {
-		return "", err
-	}
-	return result, nil
-}
-
-// Function to input the commit body
-func inputBody() (string, error) {
-	prompt := promptui.Prompt{
-		Label:     "Commit body (optional, press Enter to omit)",
-		Default:   "",
-		AllowEdit: true,
-	}
-
-	result, err := prompt.Run()
-	if err != nil {
-		return "", err
-	}
-	return result, nil
-}
-
-// Function to ask if it's a breaking change
-func askBreakingChange() (bool, error) {
-	prompt := promptui.Select{
-		Label: "Is this a breaking change?",
-		Items: []string{"No", "Yes"},
-	}
-
-	index, _, err := prompt.Run()
-	if err != nil {
-		return false, err
-	}
-	return index == 1, nil
-}
-
-// Function to format the commit message
-func formatCommitMessage(config CommitConfig) string {
-	// Initialize the commit message with the type
-	message := config.Type.Code
-
-	// Add scope if provided
-	if config.Scope != "" {
-		message += "(" + config.Scope + ")"
-	}
-
-	// Add breaking change indicator if needed
-	if config.Breaking {
-		message += "!"
-	}
-
-	// Add description
-	message += ": "
-
-	// Add emoji if selected
-	if config.Emoji.Code != "" {
-		message += ":" + config.Emoji.Code + ": "
-	}
-
-	message += config.Description
-
-	// Add body if provided
-	if config.Body != "" {
-		message += "\n\n" + config.Body
-	}
-
-	// Add BREAKING CHANGE footer if needed
-	if config.Breaking {
-		if config.Body != "" {
-			message += "\n"
-		} else {
-			message += "\n\n"
-		}
-		message += "BREAKING CHANGE: This commit introduces changes incompatible with previous versions"
-	}
-
-	return message
-}
-
-// Function to execute the commit
-func executeCommit(message string) error {
-	// First check if there are staged changes
-	cmd := exec.Command("git", "diff", "--staged", "--quiet")
-	err := cmd.Run()
-
-	if err != nil {
-		// If there are staged changes (the previous command returns an error)
-		cmd = exec.Command("git", "commit", "-m", message)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		return cmd.Run()
-	} else {
-		return errors.New("No staged changes to commit. Use 'git add' first")
-	}
-}
-
-// Function to show the commit message and confirm
-func confirmAndCommit(message string) error {
-	fmt.Println("\n=== Commit message ===")
-	fmt.Println(message)
-	fmt.Println("========================\n")
-
-	prompt := promptui.Select{
-		Label: "Confirm commit?",
-		Items: []string{"Yes", "No"},
-	}
-
-	index, _, err := prompt.Run()
-	if err != nil {
-		return err
-	}
-
-	if index == 0 {
-		return executeCommit(message)
-	}
-
-	return errors.New("Commit canceled by user")
-}
-
 // Function to generate emoji suggestions based on commit type
 func suggestEmojis(commitType CommitType) []Emoji {
 	emojis := GetEmojis()
@@ -416,6 +254,160 @@ func selectEmojiWithSuggestions(commitType CommitType) (Emoji, error) {
 	return displayEmojis[index], nil
 }
 
+// Function to input the commit description
+func inputDescription() (string, error) {
+	prompt := promptui.Prompt{
+		Label:     "Commit description",
+		Default:   "",
+		AllowEdit: true,
+		Validate: func(input string) error {
+			if len(input) < 3 {
+				return errors.New("Description must have at least 3 characters")
+			}
+			return nil
+		},
+	}
+
+	result, err := prompt.Run()
+	if err != nil {
+		return "", err
+	}
+	return result, nil
+}
+
+// Function to input the commit body
+func inputBody() (string, error) {
+	prompt := promptui.Prompt{
+		Label:     "Commit body (optional, press Enter to omit)",
+		Default:   "",
+		AllowEdit: true,
+	}
+
+	result, err := prompt.Run()
+	if err != nil {
+		return "", err
+	}
+	return result, nil
+}
+
+// Function to ask if it's a breaking change
+func askBreakingChange() (bool, error) {
+	prompt := promptui.Select{
+		Label: "Is this a breaking change?",
+		Items: []string{"No", "Yes"},
+	}
+
+	index, _, err := prompt.Run()
+	if err != nil {
+		return false, err
+	}
+	return index == 1, nil
+}
+
+// Function to input breaking change reason
+func inputBreakingReason() (string, error) {
+	prompt := promptui.Prompt{
+		Label:     "Describe why this is a breaking change",
+		Default:   "",
+		AllowEdit: true,
+	}
+
+	result, err := prompt.Run()
+	if err != nil {
+		return "", err
+	}
+	return result, nil
+}
+
+// Function to format the commit message
+func formatCommitMessage(config CommitConfig) string {
+	// Initialize the commit message with the type
+	message := config.Type.Code
+
+	// Add scope if provided
+	if config.Scope != "" {
+		message += "(" + config.Scope + ")"
+	}
+
+	// Add breaking change indicator if needed
+	if config.Breaking {
+		message += "!"
+	}
+
+	// Add description
+	message += ": "
+
+	// Add emoji if selected
+	if config.Emoji.Code != "" {
+		message += ":" + config.Emoji.Code + ": "
+	}
+
+	message += config.Description
+
+	// Add body if provided
+	if config.Body != "" {
+		message += "\n\n" + config.Body
+	}
+
+	// Add BREAKING CHANGE footer if needed
+	if config.Breaking {
+		if config.Body != "" {
+			message += "\n"
+		} else {
+			message += "\n\n"
+		}
+
+		message += "BREAKING CHANGE: "
+		if config.BreakingReason != "" {
+			message += config.BreakingReason
+		} else {
+			message += "This commit introduces changes incompatible with previous versions"
+		}
+	}
+
+	return message
+}
+
+// Function to execute the commit
+func executeCommit(message string) error {
+	// First check if there are staged changes
+	cmd := exec.Command("git", "diff", "--staged", "--quiet")
+	err := cmd.Run()
+
+	if err != nil {
+		// If there are staged changes (the previous command returns an error)
+		cmd = exec.Command("git", "commit", "-m", message)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		return cmd.Run()
+	} else {
+		return errors.New("No staged changes to commit. Use 'git add' first")
+	}
+}
+
+// Function to show the commit message and confirm
+func confirmAndCommit(message string) error {
+	fmt.Println("\n=== Commit message ===")
+	fmt.Println(message)
+	fmt.Println("========================\n")
+
+	prompt := promptui.Select{
+		Label: "Confirm commit?",
+		Items: []string{"Yes", "No"},
+	}
+
+	index, _, err := prompt.Run()
+	if err != nil {
+		return err
+	}
+
+	if index == 0 {
+		return executeCommit(message)
+	}
+
+	return errors.New("Commit canceled by user")
+}
+
 func main() {
 	fmt.Println("🚀 Conventional Commits Assistant")
 
@@ -424,28 +416,21 @@ func main() {
 
 	var err error
 
-	// Select commit type
+	// 1. Select commit type
 	config.Type, err = selectCommitType()
 	if err != nil {
 		fmt.Printf("Error selecting commit type: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Ask for scope (optional)
+	// 2. Ask for scope (optional)
 	config.Scope, err = inputScope()
 	if err != nil {
 		fmt.Printf("Error entering scope: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Ask if it's a breaking change
-	config.Breaking, err = askBreakingChange()
-	if err != nil {
-		fmt.Printf("Error selecting breaking change: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Select emoji (optional)
+	// 3. Ask if they want to include an emoji
 	emojiPrompt := promptui.Select{
 		Label: "Do you want to include an emoji?",
 		Items: []string{"Yes", "No"},
@@ -457,8 +442,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	// 4. If yes, select emoji with recommendations
 	if emojiIndex == 0 {
-		// Use the improved function that shows suggestions based on commit type
 		config.Emoji, err = selectEmojiWithSuggestions(config.Type)
 		if err != nil {
 			fmt.Printf("Error selecting emoji: %v\n", err)
@@ -466,18 +451,34 @@ func main() {
 		}
 	}
 
-	// Enter description
+	// 5. Enter description
 	config.Description, err = inputDescription()
 	if err != nil {
 		fmt.Printf("Error entering description: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Enter body (optional)
+	// 6. Enter body (optional)
 	config.Body, err = inputBody()
 	if err != nil {
 		fmt.Printf("Error entering body: %v\n", err)
 		os.Exit(1)
+	}
+
+	// 7. Ask if it's a breaking change
+	config.Breaking, err = askBreakingChange()
+	if err != nil {
+		fmt.Printf("Error selecting breaking change: %v\n", err)
+		os.Exit(1)
+	}
+
+	// 8. If it's a breaking change, ask for a reason
+	if config.Breaking {
+		config.BreakingReason, err = inputBreakingReason()
+		if err != nil {
+			fmt.Printf("Error entering breaking change reason: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	// Format commit message
