@@ -522,9 +522,9 @@ func executeCommit(message string) error {
 
 // Function to show the commit message and confirm
 func confirmAndCommit(message string) error {
-	fmt.Println("\n=== Commit message ===")
+	fmt.Println("\n============= Commit message =============\n")
 	fmt.Println(message)
-	fmt.Println("========================\n")
+	fmt.Println("\n==========================================")
 
 	prompt := promptui.Select{
 		Label: "Confirm commit?",
