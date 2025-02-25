@@ -10,20 +10,17 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-// CommitType represents a conventional commit type with its description
 type CommitType struct {
 	Code        string
 	Description string
 }
 
-// Emoji represents a commit emoji with its code and description
 type Emoji struct {
 	Symbol      string
 	Code        string
 	Description string
 }
 
-// CommitConfig holds the user's selections for a commit
 type CommitConfig struct {
 	Type            CommitType
 	Scope           string
@@ -36,7 +33,6 @@ type CommitConfig struct {
 	ReferenceIssues []string
 }
 
-// GetCommitTypes returns all available conventional commit types
 func GetCommitTypes() []CommitType {
 	return []CommitType{
 		{"feat", "A new feature"},
@@ -53,7 +49,6 @@ func GetCommitTypes() []CommitType {
 	}
 }
 
-// GetEmojis returns all available emojis for commits
 func GetEmojis() []Emoji {
 	return []Emoji{
 		{"🎨", "art", "Improve structure / format of the code"},
@@ -132,19 +127,18 @@ func GetEmojis() []Emoji {
 	}
 }
 
-// Function to select the commit type
 func selectCommitType() (CommitType, error) {
 	commitTypes := GetCommitTypes()
 	items := []string{}
 
 	for _, t := range commitTypes {
-		items = append(items, fmt.Sprintf("%s: %s", t.Code, t.Description))
+		items = append(items, fmt.Sprintf("%s -> %s", strings.ToUpper(t.Code), t.Description))
 	}
 
 	prompt := promptui.Select{
 		Label: "Select the type of change that you're committing",
 		Items: items,
-		Size:  len(commitTypes), // Show all available types
+		Size:  len(commitTypes),
 	}
 
 	index, _, err := prompt.Run()
@@ -154,10 +148,9 @@ func selectCommitType() (CommitType, error) {
 	return commitTypes[index], nil
 }
 
-// Function to input the commit scope
 func inputScope() (string, error) {
 	prompt := promptui.Prompt{
-		Label:     "Add a scope for this change (OPTIONAL) press Enter to omit",
+		Label:     "Add a scope for this change. (optional, press Enter to omit)",
 		Default:   "",
 		AllowEdit: true,
 	}
@@ -169,12 +162,10 @@ func inputScope() (string, error) {
 	return result, nil
 }
 
-// Function to generate emoji suggestions based on commit type
 func suggestEmojis(commitType CommitType) []Emoji {
 	emojis := GetEmojis()
 	suggestions := []Emoji{}
 
-	// Mapping commit types to relevant emoji codes
 	typeToEmojis := map[string][]string{
 		"feat":     {"sparkles", "rocket", "tada"},
 		"fix":      {"bug", "ambulance", "adhesive_bandage", "goal_net"},
@@ -202,17 +193,13 @@ func suggestEmojis(commitType CommitType) []Emoji {
 	return suggestions
 }
 
-// Function to select emoji with suggestions
 func selectEmojiWithSuggestions(commitType CommitType) (Emoji, error) {
 	suggestions := suggestEmojis(commitType)
 	allEmojis := GetEmojis()
 
-	// Create a slice with suggestions first
 	displayEmojis := append([]Emoji{}, suggestions...)
 
-	// Add the rest of emojis
 	for _, emoji := range allEmojis {
-		// Check if it's already in the suggestions
 		found := false
 		for _, suggested := range suggestions {
 			if emoji.Code == suggested.Code {
@@ -226,7 +213,6 @@ func selectEmojiWithSuggestions(commitType CommitType) (Emoji, error) {
 		}
 	}
 
-	// Create items to display
 	items := []string{}
 
 	for i, e := range displayEmojis {
@@ -234,11 +220,11 @@ func selectEmojiWithSuggestions(commitType CommitType) (Emoji, error) {
 		if i < len(suggestions) {
 			prefix = "🔍 "
 		}
-		items = append(items, fmt.Sprintf("%s %s (:%s:) -> %s", prefix, e.Symbol, e.Code, e.Description))
+		items = append(items, fmt.Sprintf("%s%s (:%s:) -> %s", prefix, e.Symbol, e.Code, e.Description))
 	}
 
 	prompt := promptui.Select{
-		Label:        "Select an emoji",
+		Label:        "Select an emoji (🔍 = Recommendation)",
 		Items:        items,
 		Size:         10,
 		CursorPos:    0,
@@ -257,7 +243,6 @@ func selectEmojiWithSuggestions(commitType CommitType) (Emoji, error) {
 	return displayEmojis[index], nil
 }
 
-// Function to input the commit description
 func inputDescription() (string, error) {
 	prompt := promptui.Prompt{
 		Label:     "Commit description",
@@ -278,7 +263,6 @@ func inputDescription() (string, error) {
 	return result, nil
 }
 
-// Function to input the commit body
 func inputBody() (string, error) {
 	prompt := promptui.Prompt{
 		Label:     "Commit body (optional, press Enter to omit)",
@@ -293,7 +277,6 @@ func inputBody() (string, error) {
 	return result, nil
 }
 
-// Function to ask if it's a breaking change
 func askBreakingChange() (bool, error) {
 	prompt := promptui.Select{
 		Label: "Is this a breaking change?",
@@ -307,10 +290,9 @@ func askBreakingChange() (bool, error) {
 	return index == 1, nil
 }
 
-// Function to input breaking change reason
 func inputBreakingReason() (string, error) {
 	prompt := promptui.Prompt{
-		Label:     "Describe why this is a breaking change",
+		Label:     "Describe why this is a breaking change (optional, press Enter to use the default message)",
 		Default:   "",
 		AllowEdit: true,
 	}
@@ -322,7 +304,6 @@ func inputBreakingReason() (string, error) {
 	return result, nil
 }
 
-// Function to ask if user wants to add reviewers
 func askAddReviewers() (bool, error) {
 	prompt := promptui.Select{
 		Label: "Do you want to add reviewers?",
@@ -336,7 +317,6 @@ func askAddReviewers() (bool, error) {
 	return index == 1, nil
 }
 
-// Function to input a reviewer
 func inputReviewer() (string, error) {
 	prompt := promptui.Prompt{
 		Label:     "Enter reviewer (e.g., 'John Smith')",
@@ -357,7 +337,6 @@ func inputReviewer() (string, error) {
 	return result, nil
 }
 
-// Function to ask if user wants to add more reviewers
 func askAddMoreReviewers() (bool, error) {
 	prompt := promptui.Select{
 		Label: "Do you want to add another reviewer?",
@@ -371,7 +350,6 @@ func askAddMoreReviewers() (bool, error) {
 	return index == 1, nil
 }
 
-// Function to ask if user wants to reference issues
 func askReferenceIssues() (bool, error) {
 	prompt := promptui.Select{
 		Label: "Do you want to reference issues?",
@@ -385,7 +363,6 @@ func askReferenceIssues() (bool, error) {
 	return index == 1, nil
 }
 
-// Function to input an issue reference
 func inputIssueReference() (string, error) {
 	prompt := promptui.Prompt{
 		Label:     "Enter issue reference (e.g., '#123')",
@@ -409,7 +386,6 @@ func inputIssueReference() (string, error) {
 	return result, nil
 }
 
-// Function to ask if user wants to add more issue references
 func askAddMoreIssues() (bool, error) {
 	prompt := promptui.Select{
 		Label: "Do you want to reference another issue?",
@@ -423,39 +399,30 @@ func askAddMoreIssues() (bool, error) {
 	return index == 1, nil
 }
 
-// Function to format the commit message
 func formatCommitMessage(config CommitConfig) string {
-	// Initialize the commit message with the type
 	message := config.Type.Code
 
-	// Add scope if provided
 	if config.Scope != "" {
 		message += "(" + config.Scope + ")"
 	}
 
-	// Add breaking change indicator if needed
 	if config.Breaking {
 		message += "!"
 	}
 
-	// Add description
 	message += ": "
 
-	// Add emoji if selected
 	if config.Emoji.Code != "" {
 		message += ":" + config.Emoji.Code + ": "
 	}
 
 	message += config.Description
 
-	// Add body if provided
 	if config.Body != "" {
 		message += "\n\n" + config.Body
 	}
 
-	// Add BREAKING CHANGE footer as a separate section
 	if config.Breaking {
-		// Always add a newline before the BREAKING CHANGE section
 		if !strings.HasSuffix(message, "\n\n") {
 			message += "\n\n"
 		}
@@ -468,9 +435,7 @@ func formatCommitMessage(config CommitConfig) string {
 		}
 	}
 
-	// Add reviewers if provided
 	if len(config.Reviewers) > 0 {
-		// Add a newline before the reviewers section if needed
 		if !strings.HasSuffix(message, "\n\n") {
 			message += "\n\n"
 		}
@@ -478,13 +443,10 @@ func formatCommitMessage(config CommitConfig) string {
 		for _, reviewer := range config.Reviewers {
 			message += "Reviewed-by: " + reviewer + "\n"
 		}
-		// Remove the last newline
 		message = strings.TrimSuffix(message, "\n")
 	}
 
-	// Add issue references if provided
 	if len(config.ReferenceIssues) > 0 {
-		// Add a newline before the issues section if needed
 		if !strings.HasSuffix(message, "\n\n") && !strings.HasSuffix(message, "\n") {
 			message += "\n\n"
 		} else if strings.HasSuffix(message, "\n") {
@@ -496,21 +458,17 @@ func formatCommitMessage(config CommitConfig) string {
 		for _, issue := range config.ReferenceIssues {
 			message += "Refs: " + issue + "\n"
 		}
-		// Remove the last newline
 		message = strings.TrimSuffix(message, "\n")
 	}
 
 	return message
 }
 
-// Function to execute the commit
 func executeCommit(message string) error {
-	// First check if there are staged changes
 	cmd := exec.Command("git", "diff", "--staged", "--quiet")
 	err := cmd.Run()
 
 	if err != nil {
-		// If there are staged changes (the previous command returns an error)
 		cmd = exec.Command("git", "commit", "-m", message)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -520,11 +478,12 @@ func executeCommit(message string) error {
 	}
 }
 
-// Function to show the commit message and confirm
 func confirmAndCommit(message string) error {
-	fmt.Println("\n============= Commit message =============\n")
+	fmt.Println("\n============= Commit message =============")
+	fmt.Println()
 	fmt.Println(message)
-	fmt.Println("\n==========================================")
+	fmt.Println()
+	fmt.Println("==========================================")
 
 	prompt := promptui.Select{
 		Label: "Confirm commit?",
@@ -546,26 +505,22 @@ func confirmAndCommit(message string) error {
 func main() {
 	fmt.Println("🚀 Conventional Commits Assistant")
 
-	// Collect commit information
 	config := CommitConfig{}
 
 	var err error
 
-	// 1. Select commit type
 	config.Type, err = selectCommitType()
 	if err != nil {
 		fmt.Printf("Error selecting commit type: %v\n", err)
 		os.Exit(1)
 	}
 
-	// 2. Ask for scope (optional)
 	config.Scope, err = inputScope()
 	if err != nil {
 		fmt.Printf("Error entering scope: %v\n", err)
 		os.Exit(1)
 	}
 
-	// 3. Ask if they want to include an emoji
 	emojiPrompt := promptui.Select{
 		Label: "Do you want to include an emoji?",
 		Items: []string{"Yes", "No"},
@@ -577,7 +532,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 4. If yes, select emoji with recommendations
 	if emojiIndex == 0 {
 		config.Emoji, err = selectEmojiWithSuggestions(config.Type)
 		if err != nil {
@@ -586,28 +540,24 @@ func main() {
 		}
 	}
 
-	// 5. Enter description
 	config.Description, err = inputDescription()
 	if err != nil {
 		fmt.Printf("Error entering description: %v\n", err)
 		os.Exit(1)
 	}
 
-	// 6. Enter body (optional)
 	config.Body, err = inputBody()
 	if err != nil {
 		fmt.Printf("Error entering body: %v\n", err)
 		os.Exit(1)
 	}
 
-	// 7. Ask if it's a breaking change
 	config.Breaking, err = askBreakingChange()
 	if err != nil {
 		fmt.Printf("Error selecting breaking change: %v\n", err)
 		os.Exit(1)
 	}
 
-	// 8. If it's a breaking change, ask for a reason
 	if config.Breaking {
 		config.BreakingReason, err = inputBreakingReason()
 		if err != nil {
@@ -616,14 +566,12 @@ func main() {
 		}
 	}
 
-	// 9. Ask if they want to add reviewers
 	addReviewers, err := askAddReviewers()
 	if err != nil {
 		fmt.Printf("Error asking about reviewers: %v\n", err)
 		os.Exit(1)
 	}
 
-	// 10. If yes, collect reviewers
 	if addReviewers {
 		for {
 			reviewer, err := inputReviewer()
@@ -634,7 +582,6 @@ func main() {
 
 			config.Reviewers = append(config.Reviewers, reviewer)
 
-			// Ask if they want to add more reviewers
 			addMore, err := askAddMoreReviewers()
 			if err != nil {
 				fmt.Printf("Error asking about more reviewers: %v\n", err)
@@ -647,14 +594,12 @@ func main() {
 		}
 	}
 
-	// 11. Ask if they want to reference issues
 	refIssues, err := askReferenceIssues()
 	if err != nil {
 		fmt.Printf("Error asking about issue references: %v\n", err)
 		os.Exit(1)
 	}
 
-	// 12. If yes, collect issue references
 	if refIssues {
 		for {
 			issue, err := inputIssueReference()
@@ -665,7 +610,6 @@ func main() {
 
 			config.ReferenceIssues = append(config.ReferenceIssues, issue)
 
-			// Ask if they want to add more issue references
 			addMore, err := askAddMoreIssues()
 			if err != nil {
 				fmt.Printf("Error asking about more issues: %v\n", err)
@@ -678,10 +622,8 @@ func main() {
 		}
 	}
 
-	// Format commit message
 	commitMessage := formatCommitMessage(config)
 
-	// Confirm and execute commit
 	err = confirmAndCommit(commitMessage)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
