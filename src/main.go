@@ -33,7 +33,7 @@ type CommitConfig struct {
 	ReferenceIssues []string
 }
 
-func GetCommitTypes() []CommitType {
+func getCommitTypes() []CommitType {
 	return []CommitType{
 		{"feat", "A new feature"},
 		{"fix", "A bug fix"},
@@ -49,7 +49,7 @@ func GetCommitTypes() []CommitType {
 	}
 }
 
-func GetEmojis() []Emoji {
+func getEmojis() []Emoji {
 	return []Emoji{
 		{"🎨", "art", "Improve structure / format of the code"},
 		{"⚡", "zap", "Improve performance"},
@@ -127,12 +127,61 @@ func GetEmojis() []Emoji {
 	}
 }
 
+func confirmSelect(label string) (bool, error) {
+	prompt := promptui.Select{
+		Label: label,
+		Items: []string{"No", "Yes"},
+	}
+
+	index, _, err := prompt.Run()
+	if err != nil {
+		return false, err
+	}
+	return index == 1, nil
+}
+
+func optionalInput(label string) (string, error) {
+	prompt := promptui.Prompt{
+		Label:     label,
+		Default:   "",
+		AllowEdit: true,
+	}
+
+	result, err := prompt.Run()
+	if err != nil {
+		return "", err
+	}
+	return result, nil
+}
+
+func inputWithValidation(
+	label string,
+	defaultValue string,
+	validate func(input string) error,
+) (string, error) {
+	prompt := promptui.Prompt{
+		Label:     label,
+		Default:   defaultValue,
+		AllowEdit: true,
+		Validate:  validate,
+	}
+
+	result, err := prompt.Run()
+	if err != nil {
+		return "", err
+	}
+	return result, nil
+}
+
 func selectCommitType() (CommitType, error) {
-	commitTypes := GetCommitTypes()
+	commitTypes := getCommitTypes()
 	items := []string{}
 
 	for _, t := range commitTypes {
-		items = append(items, fmt.Sprintf("%s -> %s", strings.ToUpper(t.Code), t.Description))
+		items = append(
+			items,
+			fmt.Sprintf("%s -> %s", strings.ToUpper(t.Code), t.Description),
+		)
 	}
 
 	prompt := promptui.Select{
@@ -148,22 +197,8 @@ func selectCommitType() (CommitType, error) {
 	return commitTypes[index], nil
 }
 
-func inputScope() (string, error) {
-	prompt := promptui.Prompt{
-		Label:     "Add a scope for this change. (optional, press Enter to omit)",
-		Default:   "",
-		AllowEdit: true,
-	}
-
-	result, err := prompt.Run()
-	if err != nil {
-		return "", err
-	}
-	return result, nil
-}
-
 func suggestEmojis(commitType CommitType) []Emoji {
-	emojis := GetEmojis()
+	emojis := getEmojis()
 	suggestions := []Emoji{}
 
 	typeToEmojis := map[string][]string{
@@ -195,7 +230,7 @@ func suggestEmojis(commitType CommitType) []Emoji {
 
 func selectEmojiWithSuggestions(commitType CommitType) (Emoji, error) {
 	suggestions := suggestEmojis(commitType)
-	allEmojis := GetEmojis()
+	allEmojis := getEmojis()
 
 	displayEmojis := append([]Emoji{}, suggestions...)
 
@@ -220,7 +255,13 @@ func selectEmojiWithSuggestions(commitType CommitType) (Emoji, error) {
 		if i < len(suggestions) {
 			prefix = "🔍 "
 		}
-		items = append(items, fmt.Sprintf("%s%s (:%s:) -> %s", prefix, e.Symbol, e.Code, e.Description))
+		items = append(
+			items,
+			fmt.Sprintf(
+				"%s%s (:%s:) -> %s",
+				prefix, e.Symbol, e.Code, e.Description,
+			),
+		)
 	}
 
 	prompt := promptui.Select{
@@ -241,162 +282,6 @@ func selectEmojiWithSuggestions(commitType CommitType) (Emoji, error) {
 		return Emoji{}, err
 	}
 	return displayEmojis[index], nil
-}
-
-func inputDescription() (string, error) {
-	prompt := promptui.Prompt{
-		Label:     "Commit description",
-		Default:   "",
-		AllowEdit: true,
-		Validate: func(input string) error {
-			if len(input) < 3 {
-				return errors.New("Description must have at least 3 characters")
-			}
-			return nil
-		},
-	}
-
-	result, err := prompt.Run()
-	if err != nil {
-		return "", err
-	}
-	return result, nil
-}
-
-func inputBody() (string, error) {
-	prompt := promptui.Prompt{
-		Label:     "Commit body (optional, press Enter to omit)",
-		Default:   "",
-		AllowEdit: true,
-	}
-
-	result, err := prompt.Run()
-	if err != nil {
-		return "", err
-	}
-	return result, nil
-}
-
-func askBreakingChange() (bool, error) {
-	prompt := promptui.Select{
-		Label: "Is this a breaking change?",
-		Items: []string{"No", "Yes"},
-	}
-
-	index, _, err := prompt.Run()
-	if err != nil {
-		return false, err
-	}
-	return index == 1, nil
-}
-
-func inputBreakingReason() (string, error) {
-	prompt := promptui.Prompt{
-		Label:     "Describe why this is a breaking change (optional, press Enter to use the default message)",
-		Default:   "",
-		AllowEdit: true,
-	}
-
-	result, err := prompt.Run()
-	if err != nil {
-		return "", err
-	}
-	return result, nil
-}
-
-func askAddReviewers() (bool, error) {
-	prompt := promptui.Select{
-		Label: "Do you want to add reviewers?",
-		Items: []string{"No", "Yes"},
-	}
-
-	index, _, err := prompt.Run()
-	if err != nil {
-		return false, err
-	}
-	return index == 1, nil
-}
-
-func inputReviewer() (string, error) {
-	prompt := promptui.Prompt{
-		Label:     "Enter reviewer (e.g., 'John Smith')",
-		Default:   "",
-		AllowEdit: true,
-		Validate: func(input string) error {
-			if len(input) < 1 {
-				return errors.New("Reviewer name cannot be empty")
-			}
-			return nil
-		},
-	}
-
-	result, err := prompt.Run()
-	if err != nil {
-		return "", err
-	}
-	return result, nil
-}
-
-func askAddMoreReviewers() (bool, error) {
-	prompt := promptui.Select{
-		Label: "Do you want to add another reviewer?",
-		Items: []string{"No", "Yes"},
-	}
-
-	index, _, err := prompt.Run()
-	if err != nil {
-		return false, err
-	}
-	return index == 1, nil
-}
-
-func askReferenceIssues() (bool, error) {
-	prompt := promptui.Select{
-		Label: "Do you want to reference issues?",
-		Items: []string{"No", "Yes"},
-	}
-
-	index, _, err := prompt.Run()
-	if err != nil {
-		return false, err
-	}
-	return index == 1, nil
-}
-
-func inputIssueReference() (string, error) {
-	prompt := promptui.Prompt{
-		Label:     "Enter issue reference (e.g., '#123')",
-		Default:   "#",
-		AllowEdit: true,
-		Validate: func(input string) error {
-			if !strings.HasPrefix(input, "#") {
-				return errors.New("Issue reference must start with #")
-			}
-			if len(input) < 2 {
-				return errors.New("Issue reference cannot be empty")
-			}
-			return nil
-		},
-	}
-
-	result, err := prompt.Run()
-	if err != nil {
-		return "", err
-	}
-	return result, nil
-}
-
-func askAddMoreIssues() (bool, error) {
-	prompt := promptui.Select{
-		Label: "Do you want to reference another issue?",
-		Items: []string{"No", "Yes"},
-	}
-
-	index, _, err := prompt.Run()
-	if err != nil {
-		return false, err
-	}
-	return index == 1, nil
 }
 
 func formatCommitMessage(config CommitConfig) string {
@@ -485,17 +370,14 @@ func confirmAndCommit(message string) error {
 	fmt.Println()
 	fmt.Println("==========================================")
 
-	prompt := promptui.Select{
-		Label: "Confirm commit?",
-		Items: []string{"Yes", "No"},
-	}
+	confirm, err := confirmSelect("Confirm commit?")
 
-	index, _, err := prompt.Run()
 	if err != nil {
-		return err
+		fmt.Printf("Error in the confirmation of the commit: %v\n", err)
+		os.Exit(1)
 	}
 
-	if index == 0 {
+	if confirm {
 		return executeCommit(message)
 	}
 
@@ -515,24 +397,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	config.Scope, err = inputScope()
+	config.Scope, err = optionalInput("Add a scope for this change. (optional, press Enter to omit)")
 	if err != nil {
 		fmt.Printf("Error entering scope: %v\n", err)
 		os.Exit(1)
 	}
 
-	emojiPrompt := promptui.Select{
-		Label: "Do you want to include an emoji?",
-		Items: []string{"Yes", "No"},
-	}
+	useEmoji, err := confirmSelect("Do you want to include an emoji?")
 
-	emojiIndex, _, err := emojiPrompt.Run()
 	if err != nil {
 		fmt.Printf("Error selecting emoji option: %v\n", err)
 		os.Exit(1)
 	}
 
-	if emojiIndex == 0 {
+	if useEmoji {
 		config.Emoji, err = selectEmojiWithSuggestions(config.Type)
 		if err != nil {
 			fmt.Printf("Error selecting emoji: %v\n", err)
@@ -540,33 +418,42 @@ func main() {
 		}
 	}
 
-	config.Description, err = inputDescription()
+	config.Description, err = inputWithValidation(
+		"Commit description",
+		"",
+		func(input string) error {
+			if len(input) < 3 {
+				return errors.New("Description must have at least 3 characters")
+			}
+			return nil
+		},
+	)
 	if err != nil {
 		fmt.Printf("Error entering description: %v\n", err)
 		os.Exit(1)
 	}
 
-	config.Body, err = inputBody()
+	config.Body, err = optionalInput("Commit body (optional, press Enter to omit)")
 	if err != nil {
 		fmt.Printf("Error entering body: %v\n", err)
 		os.Exit(1)
 	}
 
-	config.Breaking, err = askBreakingChange()
+	config.Breaking, err = confirmSelect("Is this a breaking change?")
 	if err != nil {
 		fmt.Printf("Error selecting breaking change: %v\n", err)
 		os.Exit(1)
 	}
 
 	if config.Breaking {
-		config.BreakingReason, err = inputBreakingReason()
+		config.BreakingReason, err = optionalInput("Describe why this is a breaking change (optional, press Enter to use the default message)")
 		if err != nil {
 			fmt.Printf("Error entering breaking change reason: %v\n", err)
 			os.Exit(1)
 		}
 	}
 
-	addReviewers, err := askAddReviewers()
+	addReviewers, err := confirmSelect("Do you want to add reviewers?")
 	if err != nil {
 		fmt.Printf("Error asking about reviewers: %v\n", err)
 		os.Exit(1)
@@ -574,7 +461,16 @@ func main() {
 
 	if addReviewers {
 		for {
-			reviewer, err := inputReviewer()
+			reviewer, err := inputWithValidation(
+				"Enter reviewer (e.g., 'John Smith')",
+				"",
+				func(input string) error {
+					if len(input) < 1 {
+						return errors.New("Reviewer name cannot be empty")
+					}
+					return nil
+				},
+			)
 			if err != nil {
 				fmt.Printf("Error entering reviewer: %v\n", err)
 				os.Exit(1)
@@ -582,7 +478,7 @@ func main() {
 
 			config.Reviewers = append(config.Reviewers, reviewer)
 
-			addMore, err := askAddMoreReviewers()
+			addMore, err := confirmSelect("Do you want to add another reviewer?")
 			if err != nil {
 				fmt.Printf("Error asking about more reviewers: %v\n", err)
 				os.Exit(1)
@@ -594,7 +490,7 @@ func main() {
 		}
 	}
 
-	refIssues, err := askReferenceIssues()
+	refIssues, err := confirmSelect("Do you want to reference issues?")
 	if err != nil {
 		fmt.Printf("Error asking about issue references: %v\n", err)
 		os.Exit(1)
@@ -602,7 +498,19 @@ func main() {
 
 	if refIssues {
 		for {
-			issue, err := inputIssueReference()
+			issue, err := inputWithValidation(
+				"Enter issue reference (e.g., '#123')",
+				"#",
+				func(input string) error {
+					if !strings.HasPrefix(input, "#") {
+						return errors.New("Issue reference must start with #")
+					}
+					if len(input) < 2 {
+						return errors.New("Issue reference cannot be empty")
+					}
+					return nil
+				},
+			)
 			if err != nil {
 				fmt.Printf("Error entering issue reference: %v\n", err)
 				os.Exit(1)
@@ -610,7 +518,7 @@ func main() {
 
 			config.ReferenceIssues = append(config.ReferenceIssues, issue)
 
-			addMore, err := askAddMoreIssues()
+			addMore, err := confirmSelect("Do you want to reference another issue?")
 			if err != nil {
 				fmt.Printf("Error asking about more issues: %v\n", err)
 				os.Exit(1)
