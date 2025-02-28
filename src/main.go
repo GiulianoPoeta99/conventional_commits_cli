@@ -371,7 +371,6 @@ func confirmAndCommit(message string) error {
 	fmt.Println("==========================================")
 
 	confirm, err := confirmSelect("Confirm commit?")
-
 	if err != nil {
 		fmt.Printf("Error in the confirmation of the commit: %v\n", err)
 		os.Exit(1)
@@ -404,7 +403,6 @@ func main() {
 	}
 
 	useEmoji, err := confirmSelect("Do you want to include an emoji?")
-
 	if err != nil {
 		fmt.Printf("Error selecting emoji option: %v\n", err)
 		os.Exit(1)
