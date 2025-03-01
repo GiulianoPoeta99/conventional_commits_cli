@@ -4,419 +4,46 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
-	"github.com/manifoldco/promptui"
+	t "conventional_commits_cli/src/types"
+	ui "conventional_commits_cli/src/ui"
 )
-
-type CommitType struct {
-	Code        string
-	Description string
-}
-
-type Emoji struct {
-	Symbol      string
-	Code        string
-	Description string
-}
-
-type CommitConfig struct {
-	Type            CommitType
-	Scope           string
-	Emoji           Emoji
-	Description     string
-	Body            string
-	Breaking        bool
-	BreakingReason  string
-	Reviewers       []string
-	ReferenceIssues []string
-}
-
-func getCommitTypes() []CommitType {
-	return []CommitType{
-		{"feat", "A new feature"},
-		{"fix", "A bug fix"},
-		{"docs", "Documentation only changes"},
-		{"style", "Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)"},
-		{"refactor", "A code change that neither fixes a bug nor adds a feature"},
-		{"perf", "A code change that improves performance"},
-		{"test", "Adding missing tests or correcting existing tests"},
-		{"build", "Changes that affect the build system or external dependencies (examples scopes: gulp, broccoli, npm)"},
-		{"ci", "Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)"},
-		{"chore", "Other changes that don't modify src or test files"},
-		{"revert", "Reverts a previous commit"},
-	}
-}
-
-func getEmojis() []Emoji {
-	return []Emoji{
-		{"🎨", "art", "Improve structure / format of the code"},
-		{"⚡", "zap", "Improve performance"},
-		{"🔥", "fire", "Remove code or files"},
-		{"🐛", "bug", "Fix a bug"},
-		{"🚑", "ambulance", "Critical hotfix"},
-		{"✨", "sparkles", "Introduce new features"},
-		{"📝", "memo", "Add or update documentation"},
-		{"🚀", "rocket", "Deploy stuff"},
-		{"💄", "lipstick", "Add or update the UI and style files"},
-		{"🎉", "tada", "Begin a project"},
-		{"✅", "white_check_mark", "Add, update, or pass test"},
-		{"🔓", "lock", "Fix security issues"},
-		{"🔐", "closed_lock_with_key", "Add or update secrets"},
-		{"🔖", "bookmark", "Release / version tags"},
-		{"🚨", "rotating_light", "Fix compiler / linter warnings"},
-		{"🚧", "construction", "Work in progress"},
-		{"💚", "green_heart", "Fix CI build"},
-		{"⬇️", "arrow_down", "Downgrade dependencies"},
-		{"⬆️", "arrow_up", "Upgrade dependencies"},
-		{"📌", "pushpin", "Pin dependencies to specific versions"},
-		{"👷", "construction_worker", "Add or update CI build system"},
-		{"📈", "chart_with_upwards_trend", "Add or update analytics or track code"},
-		{"♻️", "recycle", "Refactor code"},
-		{"➕", "heavy_plus_sign", "Add a dependency"},
-		{"➖", "heavy_minus_sign", "Remove a dependency"},
-		{"🔧", "wrench", "Add or update configuration files"},
-		{"🔨", "hammer", "Add or update development scripts"},
-		{"🌐", "globe_with_meridians", "Internationalization and localization"},
-		{"✏️", "pencil2", "Fix typos"},
-		{"💩", "poop", "Write bad code that needs to be improved"},
-		{"⏪", "rewind", "Revert changes"},
-		{"🔀", "twisted_rightwards_arrows", "Merge branches"},
-		{"📦", "package", "Add or update compiled files or packages"},
-		{"👽", "alien", "Update code due to external API changes"},
-		{"🚚", "truck", "Move or rename resources (e.g.: files, paths, routes)"},
-		{"📄", "page_facing_up", "Add or update license"},
-		{"💥", "boom", "Introduce breaking changes"},
-		{"🍱", "bento", "Add or update assets"},
-		{"♿", "wheelchair", "Improve accessibility"},
-		{"💡", "bulb", "Add or update comments in source code"},
-		{"🍻", "beers", "Write code drunkenly"},
-		{"💬", "speech_balloon", "Add or update text and literals"},
-		{"🗃️", "card_file_box", "Perform database related changes"},
-		{"🔊", "loud_sound", "Add or update logs"},
-		{"🔇", "mute", "Remove logs"},
-		{"👥", "busts_in_silhouette", "Add or update contributor(s)"},
-		{"🚸", "children_crossing", "Improve user experience / usability"},
-		{"🏗️", "building_construction", "Make architectural changes"},
-		{"📱", "iphone", "Work on responsive design"},
-		{"🤡", "clown_face", "Mock things"},
-		{"🥚", "egg", "Add or update an easter egg"},
-		{"🙈", "see_no_evil", "Add or update a .gitignore file"},
-		{"📸", "camera_flash", "Add or update snapshots"},
-		{"⚗️", "alembic", "Perform experiments"},
-		{"🔍", "mag", "Improve SEO"},
-		{"🏷️", "label", "Add or update types"},
-		{"🌱", "seedling", "Add or update seed files"},
-		{"🚩", "triangular_flag_on_post", "Add, update, or remove feature flags"},
-		{"🥅", "goal_net", "Catch errors"},
-		{"💫", "dizzy", "Add or update animations and transitions"},
-		{"🗑️", "wastebasket", "Deprecate code that needs to be cleaned up"},
-		{"🛂", "passport_control", "Work on code related to authorization, roles, and permissions"},
-		{"🩹", "adhesive_bandage", "Simple fix for a non-critical issue"},
-		{"🧐", "monocle_face", "Data exploration / inspection"},
-		{"⚰️", "coffin", "Remove dead code"},
-		{"🧪", "test_tube", "Add a failing test"},
-		{"👔", "necktie", "Add or update business logic"},
-		{"🩺", "stethoscope", "Add or update health check"},
-		{"🧱", "bricks", "Infrastructure related changes"},
-		{"🧑‍💻", "technologist", "Improve developer experience"},
-		{"💸", "money_with_wings", "Add sponsorships or money related infrastructure"},
-		{"🧵", "thread", "Add or update code related to multithreading or concurrency"},
-		{"🦺", "safety_vest", "Add or update code related to validation"},
-	}
-}
-
-func confirmSelect(label string) (bool, error) {
-	prompt := promptui.Select{
-		Label: label,
-		Items: []string{"No", "Yes"},
-	}
-
-	index, _, err := prompt.Run()
-	if err != nil {
-		return false, err
-	}
-	return index == 1, nil
-}
-
-func optionalInput(label string) (string, error) {
-	prompt := promptui.Prompt{
-		Label:     label,
-		Default:   "",
-		AllowEdit: true,
-	}
-
-	result, err := prompt.Run()
-	if err != nil {
-		return "", err
-	}
-	return result, nil
-}
-
-func inputWithValidation(
-	label string,
-	defaultValue string,
-	validate func(input string) error,
-) (string, error) {
-	prompt := promptui.Prompt{
-		Label:     label,
-		Default:   defaultValue,
-		AllowEdit: true,
-		Validate:  validate,
-	}
-
-	result, err := prompt.Run()
-	if err != nil {
-		return "", err
-	}
-	return result, nil
-}
-
-func selectCommitType() (CommitType, error) {
-	commitTypes := getCommitTypes()
-	items := []string{}
-
-	for _, t := range commitTypes {
-		items = append(
-			items,
-			fmt.Sprintf("%s -> %s", strings.ToUpper(t.Code), t.Description),
-		)
-	}
-
-	prompt := promptui.Select{
-		Label: "Select the type of change that you're committing",
-		Items: items,
-		Size:  len(commitTypes),
-	}
-
-	index, _, err := prompt.Run()
-	if err != nil {
-		return CommitType{}, err
-	}
-	return commitTypes[index], nil
-}
-
-func suggestEmojis(commitType CommitType) []Emoji {
-	emojis := getEmojis()
-	suggestions := []Emoji{}
-
-	typeToEmojis := map[string][]string{
-		"feat":     {"sparkles", "rocket", "tada"},
-		"fix":      {"bug", "ambulance", "adhesive_bandage", "goal_net"},
-		"docs":     {"memo", "bulb", "pencil2"},
-		"style":    {"art", "lipstick"},
-		"refactor": {"recycle", "hammer", "truck"},
-		"perf":     {"zap", "chart_with_upwards_trend"},
-		"test":     {"white_check_mark", "test_tube"},
-		"build":    {"package", "construction_worker"},
-		"ci":       {"green_heart", "construction"},
-		"chore":    {"wrench", "bricks"},
-		"revert":   {"rewind", "coffin"},
-	}
-
-	if emojiCodes, ok := typeToEmojis[commitType.Code]; ok {
-		for _, code := range emojiCodes {
-			for _, emoji := range emojis {
-				if emoji.Code == code {
-					suggestions = append(suggestions, emoji)
-				}
-			}
-		}
-	}
-
-	return suggestions
-}
-
-func selectEmojiWithSuggestions(commitType CommitType) (Emoji, error) {
-	suggestions := suggestEmojis(commitType)
-	allEmojis := getEmojis()
-
-	displayEmojis := append([]Emoji{}, suggestions...)
-
-	for _, emoji := range allEmojis {
-		found := false
-		for _, suggested := range suggestions {
-			if emoji.Code == suggested.Code {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			displayEmojis = append(displayEmojis, emoji)
-		}
-	}
-
-	items := []string{}
-
-	for i, e := range displayEmojis {
-		prefix := ""
-		if i < len(suggestions) {
-			prefix = "🔍 "
-		}
-		items = append(
-			items,
-			fmt.Sprintf(
-				"%s%s (:%s:) -> %s",
-				prefix, e.Symbol, e.Code, e.Description,
-			),
-		)
-	}
-
-	prompt := promptui.Select{
-		Label:        "Select an emoji (🔍 = Recommendation)",
-		Items:        items,
-		Size:         10,
-		CursorPos:    0,
-		HideSelected: false,
-		Searcher: func(input string, index int) bool {
-			item := strings.ToLower(items[index])
-			input = strings.ToLower(input)
-			return strings.Contains(item, input)
-		},
-	}
-
-	index, _, err := prompt.Run()
-	if err != nil {
-		return Emoji{}, err
-	}
-	return displayEmojis[index], nil
-}
-
-func formatCommitMessage(config CommitConfig) string {
-	message := config.Type.Code
-
-	if config.Scope != "" {
-		message += "(" + config.Scope + ")"
-	}
-
-	if config.Breaking {
-		message += "!"
-	}
-
-	message += ": "
-
-	if config.Emoji.Code != "" {
-		message += ":" + config.Emoji.Code + ": "
-	}
-
-	message += config.Description
-
-	if config.Body != "" {
-		message += "\n\n" + config.Body
-	}
-
-	if config.Breaking {
-		if !strings.HasSuffix(message, "\n\n") {
-			message += "\n\n"
-		}
-
-		message += "BREAKING CHANGE: "
-		if config.BreakingReason != "" {
-			message += config.BreakingReason
-		} else {
-			message += "This commit introduces changes incompatible with previous versions"
-		}
-	}
-
-	if len(config.Reviewers) > 0 {
-		if !strings.HasSuffix(message, "\n\n") {
-			message += "\n\n"
-		}
-
-		for _, reviewer := range config.Reviewers {
-			message += "Reviewed-by: " + reviewer + "\n"
-		}
-		message = strings.TrimSuffix(message, "\n")
-	}
-
-	if len(config.ReferenceIssues) > 0 {
-		if !strings.HasSuffix(message, "\n\n") && !strings.HasSuffix(message, "\n") {
-			message += "\n\n"
-		} else if strings.HasSuffix(message, "\n") {
-			message += "\n"
-		} else {
-			message += "\n\n"
-		}
-
-		for _, issue := range config.ReferenceIssues {
-			message += "Refs: " + issue + "\n"
-		}
-		message = strings.TrimSuffix(message, "\n")
-	}
-
-	return message
-}
-
-func executeCommit(message string) error {
-	cmd := exec.Command("git", "diff", "--staged", "--quiet")
-	err := cmd.Run()
-
-	if err != nil {
-		cmd = exec.Command("git", "commit", "-m", message)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		return cmd.Run()
-	} else {
-		return errors.New("No staged changes to commit. Use 'git add' first")
-	}
-}
-
-func confirmAndCommit(message string) error {
-	fmt.Println("\n============= Commit message =============")
-	fmt.Println()
-	fmt.Println(message)
-	fmt.Println()
-	fmt.Println("==========================================")
-
-	confirm, err := confirmSelect("Confirm commit?")
-	if err != nil {
-		fmt.Printf("Error in the confirmation of the commit: %v\n", err)
-		os.Exit(1)
-	}
-
-	if confirm {
-		return executeCommit(message)
-	}
-
-	return errors.New("Commit canceled by user")
-}
 
 func main() {
 	fmt.Println("🚀 Conventional Commits Assistant")
 
-	config := CommitConfig{}
+	config := t.CommitConfig{}
 
 	var err error
 
-	config.Type, err = selectCommitType()
+	config.Type, err = ui.SelectCommitType()
 	if err != nil {
 		fmt.Printf("Error selecting commit type: %v\n", err)
 		os.Exit(1)
 	}
 
-	config.Scope, err = optionalInput("Add a scope for this change. (optional, press Enter to omit)")
+	config.Scope, err = ui.OptionalInput("Add a scope for this change. (optional, press Enter to omit)")
 	if err != nil {
 		fmt.Printf("Error entering scope: %v\n", err)
 		os.Exit(1)
 	}
 
-	useEmoji, err := confirmSelect("Do you want to include an emoji?")
+	useEmoji, err := ui.ConfirmSelect("Do you want to include an emoji?")
 	if err != nil {
 		fmt.Printf("Error selecting emoji option: %v\n", err)
 		os.Exit(1)
 	}
 
 	if useEmoji {
-		config.Emoji, err = selectEmojiWithSuggestions(config.Type)
+		config.Emoji, err = ui.SelectEmojiWithSuggestions(config.Type)
 		if err != nil {
 			fmt.Printf("Error selecting emoji: %v\n", err)
 			os.Exit(1)
 		}
 	}
 
-	config.Description, err = inputWithValidation(
+	config.Description, err = ui.InputWithValidation(
 		"Commit description",
 		"",
 		func(input string) error {
@@ -431,27 +58,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	config.Body, err = optionalInput("Commit body (optional, press Enter to omit)")
+	config.Body, err = ui.OptionalInput("Commit body (optional, press Enter to omit)")
 	if err != nil {
 		fmt.Printf("Error entering body: %v\n", err)
 		os.Exit(1)
 	}
 
-	config.Breaking, err = confirmSelect("Is this a breaking change?")
+	config.Breaking, err = ui.ConfirmSelect("Is this a breaking change?")
 	if err != nil {
 		fmt.Printf("Error selecting breaking change: %v\n", err)
 		os.Exit(1)
 	}
 
 	if config.Breaking {
-		config.BreakingReason, err = optionalInput("Describe why this is a breaking change (optional, press Enter to use the default message)")
+		config.BreakingReason, err = ui.OptionalInput("Describe why this is a breaking change (optional, press Enter to use the default message)")
 		if err != nil {
 			fmt.Printf("Error entering breaking change reason: %v\n", err)
 			os.Exit(1)
 		}
 	}
 
-	addReviewers, err := confirmSelect("Do you want to add reviewers?")
+	addReviewers, err := ui.ConfirmSelect("Do you want to add reviewers?")
 	if err != nil {
 		fmt.Printf("Error asking about reviewers: %v\n", err)
 		os.Exit(1)
@@ -459,7 +86,7 @@ func main() {
 
 	if addReviewers {
 		for {
-			reviewer, err := inputWithValidation(
+			reviewer, err := ui.InputWithValidation(
 				"Enter reviewer (e.g., 'John Smith')",
 				"",
 				func(input string) error {
@@ -476,7 +103,7 @@ func main() {
 
 			config.Reviewers = append(config.Reviewers, reviewer)
 
-			addMore, err := confirmSelect("Do you want to add another reviewer?")
+			addMore, err := ui.ConfirmSelect("Do you want to add another reviewer?")
 			if err != nil {
 				fmt.Printf("Error asking about more reviewers: %v\n", err)
 				os.Exit(1)
@@ -488,7 +115,7 @@ func main() {
 		}
 	}
 
-	refIssues, err := confirmSelect("Do you want to reference issues?")
+	refIssues, err := ui.ConfirmSelect("Do you want to reference issues?")
 	if err != nil {
 		fmt.Printf("Error asking about issue references: %v\n", err)
 		os.Exit(1)
@@ -496,7 +123,7 @@ func main() {
 
 	if refIssues {
 		for {
-			issue, err := inputWithValidation(
+			issue, err := ui.InputWithValidation(
 				"Enter issue reference (e.g., '#123')",
 				"#",
 				func(input string) error {
@@ -516,7 +143,7 @@ func main() {
 
 			config.ReferenceIssues = append(config.ReferenceIssues, issue)
 
-			addMore, err := confirmSelect("Do you want to reference another issue?")
+			addMore, err := ui.ConfirmSelect("Do you want to reference another issue?")
 			if err != nil {
 				fmt.Printf("Error asking about more issues: %v\n", err)
 				os.Exit(1)
