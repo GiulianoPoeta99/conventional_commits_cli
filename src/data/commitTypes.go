@@ -1,7 +1,7 @@
 package data
 
 import (
-	t "conventional_commits_cli/src/types"
+	t "github.com/GiulianPoeta99/conventional_commits_cli/src/types"
 )
 
 func GetCommitTypes() []t.CommitType {

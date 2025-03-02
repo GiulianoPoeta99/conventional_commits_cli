@@ -7,8 +7,8 @@ import (
 	"os/exec"
 	"strings"
 
-	t "conventional_commits_cli/src/types"
-	ui "conventional_commits_cli/src/ui"
+	t "github.com/GiulianPoeta99/conventional_commits_cli/src/types"
+	ui "github.com/GiulianPoeta99/conventional_commits_cli/src/ui"
 )
 
 func formatCommitMessage(config t.CommitConfig) string {

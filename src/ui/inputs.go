@@ -1,10 +1,11 @@
 package ui
 
 import (
-	d "conventional_commits_cli/src/data"
-	t "conventional_commits_cli/src/types"
 	"fmt"
 	"strings"
+
+	d "github.com/GiulianPoeta99/conventional_commits_cli/src/data"
+	t "github.com/GiulianPoeta99/conventional_commits_cli/src/types"
 
 	"github.com/manifoldco/promptui"
 )
