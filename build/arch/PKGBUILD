@@ -1,0 +1,20 @@
+pkgname=conventional-commits
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="A CLI that helps to follow the “Conventional commits” format in order to make a correct versioning of the projects."
+arch=('x86_64')
+url="https://github.com/GiulianoPoeta99/conventional_commits_cli"
+license=('MIT')
+depends=('git' 'go')
+source=("https://github.com/tuusuario/ccc/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=('insertar_sha256sum_aquí')
+
+build() {
+  cd "$pkgname-$pkgver"
+  export CGO_ENABLED=0
+  go build -o ccc .
+}
+
+package() {
+  install -Dm755 ccc "$pkgdir/usr/bin/ccc"
+}
