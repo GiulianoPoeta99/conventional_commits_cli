@@ -1,3 +1,4 @@
+// Package ui provides user interface helpers using promptui for collecting inputs.
 package ui
 
 import (
@@ -10,6 +11,8 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
+// InputWithValidation displays a prompt with the given label and default value,
+// validating the input using the provided function.
 func InputWithValidation(
 	label string,
 	defaultValue string,
@@ -29,10 +32,13 @@ func InputWithValidation(
 	return result, nil
 }
 
+// SelectCommitType prompts the user to select a commit type from a list of available types.
+// It returns the selected CommitType.
 func SelectCommitType() (t.CommitType, error) {
 	commitTypes := d.GetCommitTypes()
 	items := []string{}
 
+	// Format commit types into displayable strings.
 	for _, t := range commitTypes {
 		items = append(
 			items,
@@ -53,10 +59,12 @@ func SelectCommitType() (t.CommitType, error) {
 	return commitTypes[index], nil
 }
 
+// SuggestEmojis returns a list of recommended emojis based on the provided commit type.
 func SuggestEmojis(commitType t.CommitType) []t.Emoji {
 	emojis := d.GetEmojis()
 	suggestions := []t.Emoji{}
 
+	// Map commit types to suggested emoji codes.
 	typeToEmojis := map[string][]string{
 		"feat":     {"sparkles", "rocket", "tada"},
 		"fix":      {"bug", "ambulance", "adhesive_bandage", "goal_net"},
@@ -71,6 +79,7 @@ func SuggestEmojis(commitType t.CommitType) []t.Emoji {
 		"revert":   {"rewind", "coffin"},
 	}
 
+	// Filter emojis based on suggested codes.
 	if emojiCodes, ok := typeToEmojis[commitType.Code]; ok {
 		for _, code := range emojiCodes {
 			for _, emoji := range emojis {
@@ -84,10 +93,13 @@ func SuggestEmojis(commitType t.CommitType) []t.Emoji {
 	return suggestions
 }
 
+// SelectEmojiWithSuggestions allows the user to select an emoji.
+// It provides recommendations based on the commit type, placing them at the top.
 func SelectEmojiWithSuggestions(commitType t.CommitType) (t.Emoji, error) {
 	suggestions := SuggestEmojis(commitType)
 	allEmojis := d.GetEmojis()
 
+	// Merge the suggestions and the rest of the emojis.
 	displayEmojis := append([]t.Emoji{}, suggestions...)
 
 	for _, emoji := range allEmojis {
@@ -106,6 +118,7 @@ func SelectEmojiWithSuggestions(commitType t.CommitType) (t.Emoji, error) {
 
 	items := []string{}
 
+	// Format the list of emojis for display; add a prefix for recommended ones.
 	for i, e := range displayEmojis {
 		prefix := ""
 		if i < len(suggestions) {
@@ -120,6 +133,7 @@ func SelectEmojiWithSuggestions(commitType t.CommitType) (t.Emoji, error) {
 		)
 	}
 
+	// Create a prompt with search capability.
 	prompt := promptui.Select{
 		Label:        "Select an emoji (🔍 = Recommendation)",
 		Items:        items,

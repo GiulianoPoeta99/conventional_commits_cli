@@ -1,9 +1,14 @@
+// Package data provides functions to retrieve commit types and emojis.
+// GetEmojis returns a slice of Emoji structures representing the available emojis
+// for enhancing commit messages with visual indicators.
 package data
 
 import (
 	t "github.com/GiulianPoeta99/conventional_commits_cli/internal/types"
 )
 
+// GetEmojis returns a slice of Emoji.
+// Each Emoji contains a symbol, a code, and a brief description of its intended usage.
 func GetEmojis() []t.Emoji {
 	return []t.Emoji{
 		{

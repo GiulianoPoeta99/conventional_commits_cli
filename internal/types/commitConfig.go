@@ -1,5 +1,7 @@
+// Package types defines the structures used for constructing commit configuration data.
 package types
 
+// CommitConfig holds all information required to format a commit message.
 type CommitConfig struct {
 	Type            CommitType
 	Scope           string

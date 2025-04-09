@@ -1,9 +1,13 @@
+// Package data provides functions to retrieve commit types and emojis.
+// It serves as a data source for the available commit types used in the commit message formatting.
 package data
 
 import (
 	t "github.com/GiulianPoeta99/conventional_commits_cli/internal/types"
 )
 
+// GetCommitTypes returns a slice of CommitType that describes the available commit types.
+// Each CommitType contains a code and a description explaining its purpose.
 func GetCommitTypes() []t.CommitType {
 	return []t.CommitType{
 		{
