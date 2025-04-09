@@ -46,7 +46,7 @@ checksum:
 
 release:
   github:
-    owner: GiulinanoPoeta99              
+    owner: GiulianoPoeta99              
     name: conventional_commits_cli
   draft: false
   prerelease: false
