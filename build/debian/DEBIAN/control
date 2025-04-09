@@ -1,7 +1,0 @@
-Package: conventional-commits
-Version: 1.0.0
-Section: utils
-Priority: optional
-Architecture: amd64
-Maintainer: GiulianoPoeta99 <giuliano.poeta.laboral@gmail.com>
-Description: A CLI that helps to follow the “Conventional commits” format in order to make a correct versioning of the projects. 
