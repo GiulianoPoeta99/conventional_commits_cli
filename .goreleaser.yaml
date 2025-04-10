@@ -13,7 +13,7 @@ before:
     - go generate ./...
 
 builds:
-  - main: ./cmd/app/main.go
+  - main: ./main.go
     binary: commit
     env:
       - CGO_ENABLED=0
