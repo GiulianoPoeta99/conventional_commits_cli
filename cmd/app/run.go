@@ -1,5 +1,5 @@
 // Package main is the entry point of the Conventional Commits Assistant application.
-package main
+package app
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ import (
 // main is the entry point for the application.
 // It collects user inputs to build a commit message following Conventional Commits standards,
 // then formats and executes the commit.
-func main() {
+func Run() {
 	// Print welcome message for the assistant.
 	fmt.Println("🚀 Conventional Commits Assistant")
 
