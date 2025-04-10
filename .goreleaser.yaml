@@ -3,7 +3,7 @@
 
 version: 1
 # Nombre de tu proyecto (se usará en la plantilla de nombres y releases)
-project_name: tu-cli
+project_name: conventional_commits_cli
 
 before:
   hooks:
