@@ -1,0 +1,3 @@
+dc6dbe14c841a9137bce3ef25c3fe9eb2b5b7fc8cecdb88f4d91693a3a278f15  tu-cli_Darwin_x86_64.tar.gz
+882d3b31df1536bdf398cc9b0f7218bb40d3d603f09dcee6508bd32e473fb653  tu-cli_Linux_x86_64.tar.gz
+eee204825c910a272ac30ac5bd4e24a4ca6b67736706e711b2a1eb885aa1c9a2  tu-cli_Windows_x86_64.zip
