@@ -21,13 +21,13 @@ Conventional Commits CLI is an interactive command-line tool designed to help yo
 You can install the CLI tool using Go:
 
 ```bash
-go install github.com/GiulianPoeta99/conventional_commits_cli@latest
+go install github.com/GiulianoPoeta99/conventional_commits_cli@latest
 ```
 
 Alternatively, clone the repository and build the project locally:
 
 ```bash
-git clone https://github.com/GiulianPoeta99/conventional_commits_cli.git
+git clone https://github.com/GiulianoPoeta99/conventional_commits_cli.git
 cd conventional_commits_cli
 go build
 ```

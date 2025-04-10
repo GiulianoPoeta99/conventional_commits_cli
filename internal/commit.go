@@ -8,8 +8,8 @@ import (
 	"os/exec"
 	"strings"
 
-	t "github.com/GiulianPoeta99/conventional_commits_cli/internal/types"
-	ui "github.com/GiulianPoeta99/conventional_commits_cli/internal/ui"
+	t "github.com/GiulianoPoeta99/conventional_commits_cli/internal/types"
+	ui "github.com/GiulianoPoeta99/conventional_commits_cli/internal/ui"
 )
 
 // FormatCommitMessage formats the commit message according to the provided configuration.

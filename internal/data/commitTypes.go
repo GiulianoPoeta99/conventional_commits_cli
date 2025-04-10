@@ -3,7 +3,7 @@
 package data
 
 import (
-	t "github.com/GiulianPoeta99/conventional_commits_cli/internal/types"
+	t "github.com/GiulianoPoeta99/conventional_commits_cli/internal/types"
 )
 
 // GetCommitTypes returns a slice of CommitType that describes the available commit types.

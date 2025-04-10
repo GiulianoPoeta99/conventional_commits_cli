@@ -4,7 +4,7 @@
 package data
 
 import (
-	t "github.com/GiulianPoeta99/conventional_commits_cli/internal/types"
+	t "github.com/GiulianoPoeta99/conventional_commits_cli/internal/types"
 )
 
 // GetEmojis returns a slice of Emoji.

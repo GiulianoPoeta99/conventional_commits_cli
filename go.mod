@@ -1,4 +1,4 @@
-module github.com/GiulianPoeta99/conventional_commits_cli
+module github.com/GiulianoPoeta99/conventional_commits_cli
 
 go 1.24.1
 

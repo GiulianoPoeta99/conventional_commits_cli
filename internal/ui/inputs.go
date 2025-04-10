@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	d "github.com/GiulianPoeta99/conventional_commits_cli/internal/data"
-	t "github.com/GiulianPoeta99/conventional_commits_cli/internal/types"
+	d "github.com/GiulianoPoeta99/conventional_commits_cli/internal/data"
+	t "github.com/GiulianoPoeta99/conventional_commits_cli/internal/types"
 
 	"github.com/manifoldco/promptui"
 )

@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	commit "github.com/GiulianPoeta99/conventional_commits_cli/internal"
-	t "github.com/GiulianPoeta99/conventional_commits_cli/internal/types"
-	ui "github.com/GiulianPoeta99/conventional_commits_cli/internal/ui"
+	commit "github.com/GiulianoPoeta99/conventional_commits_cli/internal"
+	t "github.com/GiulianoPoeta99/conventional_commits_cli/internal/types"
+	ui "github.com/GiulianoPoeta99/conventional_commits_cli/internal/ui"
 )
 
 // main is the entry point for the application.
